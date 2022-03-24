@@ -19,7 +19,11 @@ use Accessor(
 	domain            => 'domain',      # domain name
 	srv               => 'srv',         # whois host name
 	logger            => 'logger',      # Log4Perl object
-	errstr            => 'errstr',      # error string if exists
+	error_code        => 'error_code',  # response error code:
+	                                    #   TIMEOUT                   - response timeout
+	                                    #   NOT_FOUND                 - domain not found
+	                                    #   UNKNOWN_RESPONSE_FORMAT   - unknown whois response format
+	                                    #   UNKNOWN_ERROR             - any other whois errors
 	debug             => 'debug',       # debug flag
 );
 
@@ -52,14 +56,13 @@ sub new
 
 	}, $class;
 
-	Util::debug(['debug', $self->debug, $p{debug}]);
 	$self->print_debug if $self->debug;
 
 	if ( $p{error} ) {
 		$self->error(
 			( $p{error} =~ /^Connection timeout/i )
-				? 'Whois connection timeout for the request info domain "'.	$self->domain.'"'
-				: 'Unknown whois error, see the whois.log file'
+				? 'TIMEOUT'
+				: 'UNKNOWN_ERROR'
 		);
 		return $self;
 	}
@@ -95,13 +98,13 @@ sub _parse_response {
 
 	# domain not found
 	if ( $self->raw =~ /^Domain not found/ ) {
-		return $self->error('Domain '.$self->domain.' not found at the whois server "'.$self->srv);
+		return $self->error('NOT_FOUND');
 	}
 
 	# success responce should be started by 'Domain Name: ...' string
 	unless ( $self->raw =~ /^Domain Name/ ) {
 		$self->print_debug;
-		return $self->error('Unknown whois "'.$self->srv.'" response format for the domain "'.$self->domain.'"');
+		return $self->error('UNKNOWN_RESPONSE_FORMAT');
 	}
 
 	for my $line (split /\n/, $self->raw) {
@@ -142,20 +145,33 @@ sub _parse_response {
 # @return \c list domain statuses, may be empty
 sub domain_status {
 	my $self = shift;
-	# 'Domain Status' => 'clientTransferProhibited https://icann.org/epp#clientTransferProhibited',
+
+	# Domain Status: clientDeleteProhibited https://icann.org/epp#clientDeleteProhibited
+	# Domain Status: clientTransferProhibited https://icann.org/epp#clientTransferProhibited
+
 	# Util::debug( [grep { !/^http/ } split( /\s+/, $self->{_parse}{'Domain Status'} )] );
-	return( grep { !/^http/ } split( /\s+/, $self->{_parse}{'domain status'} ) );
+	my $raw_status = $self->{_parse}{'domain status'};
+	unless (ref $raw_status) {
+		$raw_status = [ $raw_status ];
+	}
+
+	my @result;
+
+	for my $line ( @$raw_status ) {
+		push @result, ( split( /\s+/, $line ) )[0];
+	}
+
+	return @result;
 }
 
 
 
 
-## @method bool error(string errstr)
-# save error string and return false (you can throw up that value to a call stack)
+## @method bool error(string error_code)
+# save the error code event and return false (you can throw up that value to a call stack)
 sub error {
-	my ($self, $errstr) = @_;
-	$self->{errstr} = $errstr;
-	$self->logger->error($errstr);
+	my ($self, $error_code) = @_;
+	$self->{error_code} = $error_code;
 	return 0;
 }
 

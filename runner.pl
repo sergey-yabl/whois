@@ -118,6 +118,9 @@ sub main {
 
 	my $logger = Log::Log4perl->get_logger();
 
+	$logger->info('Debug flag is ON, all whois response string will be saved at the debug.log file.')
+		if $p{debug};
+
 	my $whois = Interface::Whois->new(
 		logger => $logger,
 		debug  => $p{debug},
@@ -131,7 +134,8 @@ sub main {
 
 	my $c = 0;
 
-	Util::debug('domain;status');
+	# Util::debug('domain;status');
+	println('domain;status');
 
 	while (my $line = <F>) {
 
@@ -141,10 +145,10 @@ sub main {
 		next unless $domain;
 		next if $domain =~ /^#/;
 
-		println $domain;
+		# println $domain;
 
 		unless (is_domain($domain)) {
-			warn('Warning: the string "'.$domain.'" at the line '.$c.' doesn\'t look like a domain name. Go to the next line.');
+			$logger->warn('Warning: the string "'.$domain.'" at the line '.$c.' doesn\'t look like a domain name. Go to the next line.');
 			next;
 		}
 
@@ -153,26 +157,41 @@ sub main {
 		#my $dominfo = whois('info', 'whois.iana.org');
 		# my $dominfo = whois('key-systems.info', 'whois.nic.info');
 		#my $dominfo = get_whois($domain, 'whois.iana.org');
-		
-		# my $res = $whois->get_info('key-systems.info');
+
+
+		$logger->info('Get whois info for the domain "'.$domain .'"');
+
 		my $res = $whois->get_info($domain);
+
+		unless ($res) {
+			println($domain.';ERROR: UNKNOWN_WHOIS');
+			$logger->error('Unknown whois server, go to the next line.');
+			next;
+		}
 
 		# process errors
 		unless ( $res->is_success) {
-			# $logger->error( $res->errstr );
+
+			$logger->error($domain.';ERROR: '.$res->error_code);
+			println($domain.';ERROR: '.$res->error_code);
+
 			$logger->error( 
 				$res->error_code eq 'NOT_FOUND'
-					? 'Domain '.$res->domain.' not found at the whois server "'.$res->srv
-					: $res->error_code eq 'UNKNOWN_RESPONSE_FORMAT'
-						? 'Unknown whois "'.$res->srv.'" response format for the domain "'.$res->domain.'"'
-						: 'Unknown whois "'.$res->srv.'" error'
+					? 'Domain '.$res->domain.' not found at the whois server "'.$res->srv.'"'
+					: $res->error_code eq 'TIMEOUT'
+						? 'Request timeout for the whois server "'.$res->srv.'"'
+						: $res->error_code eq 'UNKNOWN_RESPONSE_FORMAT'
+							? 'Unknown whois "'.$res->srv.'" response format for the domain "'.$res->domain.'", see the debug.log file'
+							: 'Unknown whois "'.$res->srv.'" error'
 			);
-			# $logger->error( $res->errstr );
+
 			next;
 		}
 
 		# println($res->raw);
-		Util::debug( join ';', $domain, join(',', $res->domain_status) );
+		# Util::debug( join ';', $domain, join(',', $res->domain_status) );
+		println( join ';', $domain, join(',', $res->domain_status) );
+		$logger->info('Success getting whois info');
 	}
 
 	close F;

@@ -43,7 +43,7 @@ sub new
 		servers  => {
 			org  => 'whois.pir.org',
 			info => 'whois.nic.info',
-			azia => 'whois.nic.asia',
+			asia => 'whois.nic.asia',
 			biz  => 'whois.nic.biz',
 			mobi => 'whois.nic.mobi',
 		},
@@ -61,7 +61,9 @@ sub new
 ## @method obj get_info(string domain)
 # get domain info from whois
 # @param  \c p domain - \c string domain name
-# @return \c obj Interface::Whois::Response
+# @param  \c p srv    - \c string whois hostname, if don't pass, 
+# @return \c obj Interface::Whois::Response is success
+# @return \c FALSE if whois server not found
 sub get_info {
 	my ($self, $domain) = @_;
 
@@ -69,8 +71,6 @@ sub get_info {
 
 	my $srv = $self->get_whois_server($domain)
 		or return $self->error('Unknow whois server for the domain "'.$domain.'", skip it and  go to the next line');
-
-	$self->logger->info($domain .' try to get whois info from srv '.$srv);
 
 	my $info = eval { whois($domain, $srv) };
 
