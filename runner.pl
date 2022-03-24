@@ -50,7 +50,7 @@ use FindBin;
 
 BEGIN { 
 	unshift @INC, "$FindBin::Bin/lib";
-	$ENV{HTTPS_DEBUG} = 0;  #Add debug output
+	# $ENV{HTTPS_DEBUG} = 0;  #Add debug output
 }
 
 use Pod::Usage;
@@ -77,7 +77,7 @@ GetOptions(
 	'out=s'      => \( my $out          = undef),    # path to an output result file
 	'domain=s'   => \( my $domain       = undef),    # domain name (for check how it works)
 	'limit=i'    => \( my $limit        = undef),    # limit on the number of requests during testing
-	'debug'      => \( my $debug        = undef),    # log the content of all EPP requests/responses
+	'debug'      => \( my $debug        = undef),    # log whois response
 	"help|h"     => \( my $help         = undef),    # help
 );
 
@@ -93,7 +93,6 @@ unless ( defined $in || defined $domain ) {
 }
 
 
-
 main(
 	in     => $in,
 	domain => $domain,
@@ -104,11 +103,7 @@ main(
 
 
 sub main {
-
-	my $thread_num = shift;
-	my $stat  = shift;
-	my $prob_scale  = shift;
-	my $debug = shift;
+	my %p = @_;
 
 	Log::Log4perl->init( {
 		'log4perl.rootLogger'                   => 'INFO, LOGFILE',
@@ -125,16 +120,18 @@ sub main {
 
 	my $whois = Interface::Whois->new(
 		logger => $logger,
-		debug  => $debug,
+		debug  => $p{debug},
 	);
 
-	my $path = Util::abs_path($in);
+	my $path = Util::abs_path($p{in});
 	unless (-e $path) { return croak ("Input file '$path' not found.") };
 
 	open(F, '<', $path) 
 		or croak('Can not open file : '.$path.'. '.$!);
 
 	my $c = 0;
+
+	Util::debug('domain;status');
 
 	while (my $line = <F>) {
 
@@ -157,10 +154,25 @@ sub main {
 		# my $dominfo = whois('key-systems.info', 'whois.nic.info');
 		#my $dominfo = get_whois($domain, 'whois.iana.org');
 		
-		my $res = $whois->get_info('key-systems.info');
+		# my $res = $whois->get_info('key-systems.info');
+		my $res = $whois->get_info($domain);
 
+		# process errors
+		unless ( $res->is_success) {
+			# $logger->error( $res->errstr );
+			$logger->error( 
+				$res->error_code eq 'NOT_FOUND'
+					? 'Domain '.$res->domain.' not found at the whois server "'.$res->srv
+					: $res->error_code eq 'UNKNOWN_RESPONSE_FORMAT'
+						? 'Unknown whois "'.$res->srv.'" response format for the domain "'.$res->domain.'"'
+						: 'Unknown whois "'.$res->srv.'" error'
+			);
+			# $logger->error( $res->errstr );
+			next;
+		}
 
-		println($res->raw);
+		# println($res->raw);
+		Util::debug( join ';', $domain, join(',', $res->domain_status) );
 	}
 
 	close F;

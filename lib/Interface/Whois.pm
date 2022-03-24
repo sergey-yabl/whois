@@ -14,7 +14,7 @@ use utf8;
 use Net::Whois::Raw;
 use Interface::Whois::Response;
 
-$Net::Whois::Raw::TIMEOUT = 1;
+$Net::Whois::Raw::TIMEOUT = 5;
 
 
 use Accessor(
@@ -72,29 +72,38 @@ sub get_info {
 
 	$self->logger->info($domain .' try to get whois info from srv '.$srv);
 
-	my $info = eval { whois('key-systems.info'), $srv };
+	my $info = eval { whois($domain, $srv) };
 
-	Util::debug([$info, $@]);
+	# Util::debug([$info, $@]);
 
-	# return $info unless $@;
-	return Interface::Whois::Response->new($info, $domain)
-		unless $@;
+	$self->logger->error($@) if $@;
 
-	# Process request error
-	$self->logger->error($@);
+	return Interface::Whois::Response->new(
+		raw      => $info,
+		domain   => $domain,
+		logger   => $self->logger,
+		srv      => $srv,
+		error    => $@,
+		debug    => $self->debug,
+	);
 
-	# Connection timeout error, try to use alternative way for getting whois info
-	if ( $@ =~ /^Connection timeout/ ) {
-
-		return $self->error('Connection timeout to the srv server '.$srv);
-
-		#for ( $self->search_whois($domain) ) {
-		#	$self->logger->info($domain .' get whois info');
-		#}
-
-	}
-
-	return $self->error('Unknown connection error to the srv server '.$srv);
+#		unless $@;
+#
+#	# Process request error
+#	$self->logger->error($@);
+#
+#	# Connection timeout error, try to use alternative way for getting whois info
+#	if ( $@ =~ /^Connection timeout/ ) {
+#
+#		return $self->error('Connection timeout to the srv server '.$srv);
+#
+#		#for ( $self->search_whois($domain) ) {
+#		#	$self->logger->info($domain .' get whois info');
+#		#}
+#
+#	}
+#
+#	return $self->error('Unknown connection error to the srv server '.$srv);
 
 }
 
@@ -133,7 +142,7 @@ sub get_whois_server {
 
 	my $tld = (split /\./, $domain)[-1];
 
-	return $self->servers->{lc $tld};
+	return $self->servers->{lc $tld} || '';
 }
 
 
