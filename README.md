@@ -4,15 +4,16 @@
  - Install CPAN packages
    ```sh
    sudo apt-get install -y git cpanminus gcc
-   sudo cpanm IO::Socket::SSL \
-     HTTP::Request            \
-     LWP::Protocol::https     \
-     LWP::UserAgent           \
-     Time::HiRes              \
-     Log::Log4perl            \
-     YAML::XS                 \
-     JSON                     \
-     Data::Validate::Domain   \
+   sudo cpanm IO::Socket::SSL    \
+     HTTP::Request               \
+     LWP::Protocol::https        \
+     LWP::UserAgent              \
+     Time::HiRes                 \
+     Log::Log4perl               \
+     YAML::XS                    \
+     JSON                        \
+     Data::Validate::Domain      \
+     DateTime::Format::RFC3339   \
      Net::Whois::Raw
    ```
 

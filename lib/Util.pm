@@ -196,7 +196,7 @@ sub debug_trace {
 sub format_date
 # ----------------------------------------------------------
 {
-	my ($time, $format) = @_;
+	my ($time, $format, $is_gmt) = @_;
 
 	$format = 'YYYY-MM-DD' unless $format;
 
@@ -229,7 +229,7 @@ sub format_date
 
 	$time = expire_calc($time);
 	my %data;
-	@data{qw/s m h D M Y/} = localtime($time);
+	@data{qw/s m h D M Y/} = $is_gmt ? gmtime($time) : localtime($time);
 	$data{Y}+=1900;
 	$data{M}++;
 

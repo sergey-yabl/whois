@@ -11,6 +11,7 @@ use strict;
 use warnings;
 use utf8;
 
+use DateTime::Format::RFC3339;
 
 # Getters and setters
 use Accessor(
@@ -53,6 +54,7 @@ sub new
 		'errstr'          => '',
 		'debug'           => $p{debug},
 		'_parse'          => {},
+		'_cache'          => {},
 
 	}, $class;
 
@@ -109,7 +111,10 @@ sub _parse_response {
 
 	for my $line (split /\n/, $self->raw) {
 
-		my ($key, $val) = map { Util::trim($_) } split(':', $line, 2);
+		$line = Util::trim($line);
+		next if ( !$line or $line !~ /: / );
+
+		my ($key, $val) = map { Util::trim($_) } split(': ', $line, 2);
 
 		next unless ($key);
 
@@ -117,11 +122,6 @@ sub _parse_response {
 
 		# for a milti-value param save it as array
 		if ( $self->{_parse}{$key} ) {
-
-			#Util::debug([
-			#	$self->{_parse}{$key},
-			#	ref $self->{_parse}{$key}
-			#]);
 
 			$self->{_parse}{$key} = [ $self->{_parse}{$key} ] 
 				if ref $self->{_parse}{$key} ne 'ARRAY';
@@ -149,7 +149,6 @@ sub domain_status {
 	# Domain Status: clientDeleteProhibited https://icann.org/epp#clientDeleteProhibited
 	# Domain Status: clientTransferProhibited https://icann.org/epp#clientTransferProhibited
 
-	# Util::debug( [grep { !/^http/ } split( /\s+/, $self->{_parse}{'Domain Status'} )] );
 	my $raw_status = $self->{_parse}{'domain status'};
 	unless (ref $raw_status) {
 		$raw_status = [ $raw_status ];
@@ -165,6 +164,47 @@ sub domain_status {
 }
 
 
+
+## @method timestamp domain_expire_date(void)
+# return EPOCH timestamp of a expire domain date 
+# @return \c timestamp epoch timestamp
+sub domain_expire_date {
+	my $self = shift;
+
+	return $self->{_cache}{expire_date} 
+		if $self->{_cache}{expire_date};
+
+	# Registry Expiry Date: 2022-07-31T17:05:38Z
+	# Registrar Registration Expiration Date: 2022-11-12T14:42:38Z
+	my $expire = $self->{_parse}{'registry expiry date'} || $self->{_parse}{'registrar registration expiration date'};
+
+	return 0 unless $expire;
+
+	my $epoch = DateTime::Format::RFC3339->new->parse_datetime($expire)->epoch;
+
+	$self->{_cache}{expire_date} = $epoch;
+
+	return $self->{_cache}{expire_date};
+}
+
+
+
+## @method timestamp domain_expire_days(void)
+# return days number from NOW and domain expire date
+# @return \c int days number before expire date
+# @return \c undef if expire date is not defined
+sub domain_expire_days {
+	my $self = shift;
+
+	my $expire_epoch = $self->domain_expire_date;
+
+	return undef unless $expire_epoch;
+
+	my $delta = $self->domain_expire_date - time;
+	my $days = int ( $delta / 86400 );
+
+	return $days;
+}
 
 
 ## @method bool error(string error_code)
