@@ -25,6 +25,8 @@ use Accessor(
 	errstr          => 'errstr',
 );
 
+
+
 ## @cmethod object new(hash %p)
 # constructor
 # @param p parameter hash with keys:
@@ -71,8 +73,6 @@ sub get_info {
 
 	my $info = eval { whois($domain, $srv) };
 
-	# Util::debug([$info, $@]);
-
 	$self->logger->error($@) if $@;
 
 	return Interface::Whois::Response->new(
@@ -83,24 +83,6 @@ sub get_info {
 		error    => $@,
 		debug    => $self->debug,
 	);
-
-#		unless $@;
-#
-#	# Process request error
-#	$self->logger->error($@);
-#
-#	# Connection timeout error, try to use alternative way for getting whois info
-#	if ( $@ =~ /^Connection timeout/ ) {
-#
-#		return $self->error('Connection timeout to the srv server '.$srv);
-#
-#		#for ( $self->search_whois($domain) ) {
-#		#	$self->logger->info($domain .' get whois info');
-#		#}
-#
-#	}
-#
-#	return $self->error('Unknown connection error to the srv server '.$srv);
 
 }
 
@@ -124,16 +106,12 @@ sub error {
 }
 
 
-## @method bool get_whois_server(hash p)
-# одной строкой для чего нужен метод
-# @param \c p хэш параметров с ключами:
-# @arg \c id      - \c int id сообщения
-# @arg \c created - \c string timestamp создания в формате YYYY-MM-DD hh:mm:ss
-# @retval \c int id при успешном создании
-# @retval \c false при ошибке
-# @return \c obj объект Model::Archive
-# @note произвольная строка ...
-# @note ... продолжение примечания
+
+## @method bool get_whois_server(string domain)
+# search whois server for a domain
+# @param \c domain - \c string domain name
+# @retval \c string whois hostname
+# @retval \c false if whois server unknown
 sub get_whois_server {
 	my ($self, $domain) = @_;
 
@@ -146,19 +124,5 @@ sub get_whois_server {
 
 
 1;
-
-
-__END__
-
-Error: Connection timeout to whois.afilias.net at /usr/local/share/perl/5.32.1/Net/Whois/Raw.pm line 304, <F> line 2.
- at /usr/local/share/perl/5.32.1/Net/Whois/Raw.pm line 348, <F> line 2.
-        Net::Whois::Raw::whois_query("key-systems.info", "whois.afilias.net", 0) called at /usr/local/share/perl/5.32.1/Net/Whois/Raw.pm line 173
-        Net::Whois::Raw::recursive_whois("key-systems.info", "whois.afilias.net", ARRAY(0x55f089fc3e18), "", 0) called at /usr/local/share/perl/5.32.1/Net/Whois/Raw.pm line 131
-        Net::Whois::Raw::get_all_whois("key-systems.info", undef, "") called at /usr/local/share/perl/5.32.1/Net/Whois/Raw.pm line 100
-        Net::Whois::Raw::get_whois("key-systems.info", undef, "QRY_LAST") called at /usr/local/share/perl/5.32.1/Net/Whois/Raw.pm line 81
-        Net::Whois::Raw::whois("key-systems.info") called at /home/yabl/work/whois/lib/Interface/Whois.pm line 70
-        eval {...} called at /home/yabl/work/whois/lib/Interface/Whois.pm line 70
-        Interface::Whois::get_info(Interface::Whois=HASH(0x55f089fc3f68), "key-systems.info") called at ./runner.pl line 160
-        Centralnic::Whois::main("in", "domain_list", "domain", undef, "out", undef, "limit", undef, ...) called at ./runner.pl line 98
 
 

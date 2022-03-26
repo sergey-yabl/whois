@@ -85,16 +85,11 @@ sub _init {}
 
 
 
-## @method bool xxx_xxx(hash p)
-# одной строкой для чего нужен метод
-# @param \c p хэш параметров с ключами:
-# @arg \c id      - \c int id сообщения
+## @method bool _parse_response(void)
+# make key-value hash from a raw whois response string and save result as $self->{_parse} value
 # @arg \c created - \c string timestamp создания в формате YYYY-MM-DD hh:mm:ss
-# @retval \c int id при успешном создании
-# @retval \c false при ошибке
-# @return \c obj объект Model::Archive
-# @note произвольная строка ...
-# @note ... продолжение примечания
+# @retval \c TRUE if parsed completed successful
+# @retval \c FALSE if raw string can not be parsed
 sub _parse_response {
 	my $self = shift;
 
@@ -270,14 +265,6 @@ Admin Organization: REDACTED FOR PRIVACY
 Admin Street: REDACTED FOR PRIVACY
 Admin City: REDACTED FOR PRIVACY
 Admin State/Province: REDACTED FOR PRIVACY
-
-
-
-
-
-
-
-
 
 
 Domain Name: key-systems.info
