@@ -156,7 +156,7 @@ list.pl [--in <path>] [--extend] [--debug]
   Options:
     --help:        Print a summary of the command-line usage and exit.
     --in:          Path to a file with domain names list (one domain per line).
-    --extend:      Print out extend info: expiration date and calculated amount of days
+    --extend:      Print out extend info: expiration date and calculated amount of days.
     --debug:       Each request/response body are going to logging.
 ```
 
