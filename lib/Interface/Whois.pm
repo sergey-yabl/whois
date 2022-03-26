@@ -40,17 +40,14 @@ sub new
 		#config   => $p{config},
 		logger   => $p{logger},
 		debug    => $p{debug},      # debug flag
-		servers  => {
-			org  => 'whois.pir.org',
-			info => 'whois.nic.info',
-			asia => 'whois.nic.asia',
-			biz  => 'whois.nic.biz',
-			mobi => 'whois.nic.mobi',
-		},
+		servers  => '',             # whois severs list, setup bellow
 		cache    => {},             # whois servers cache
 		whois    => undef,          # https://whois.icann.org/en/dns-and-whois-how-it-works
 		errstr   => '', 
 	}, $class;
+
+	$self->{servers} = Util::read_yaml('conf/whois.conf')
+		or die('ERROR: Can not read the whois config file: ' . $!);
 
 	return $self;
 }

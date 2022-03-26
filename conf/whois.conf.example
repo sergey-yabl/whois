@@ -1,0 +1,14 @@
+
+# whois servers configuration
+# you can find an actual whois server via whois.iana.org, for example:
+#   whois -h whois.iana.org org
+#   ...
+#   whois:        whois.pir.org
+#   ...
+
+org  : whois.pir.org
+info : whois.nic.info
+asia : whois.nic.asia
+biz  : whois.nic.biz
+mobi : whois.nic.mobi
+

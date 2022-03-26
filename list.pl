@@ -15,7 +15,7 @@ package Centralnic::Whois;
 
 =head1 NAME
 
-runner.pl
+list.pl
 
 =head1 DESCRIPTION
 
@@ -23,21 +23,19 @@ Get whois info for a domains list
 
 =head1 SYNOPSIS
 
-runner.pl [--in <path>] [--out <path>] [--limit <n>]  [--debug]
+list.pl [--in <path>] [--extend] [--debug]
 
   Options:
     --help:        Print a summary of the command-line usage and exit.
     --in:          Path to a file with domain names list (one domain per line).
-    --out:         Path to the file with result.
-    --limit:       Exit when <n> domains from the list have passed.
+    --extend:      Print out extend info: expiration date and calculated amount of days
     --debug:       Each request/response body are going to logging.
 
 =head1 EXAMPLES
 
-./runner.pl     \
-  --in   /home/username/domains  \
-  --out  /home/username/result   \
-  --limit 1                      \
+./list.pl     \
+  --in   /home/username/domains_list  \
+  --extend
   --debug
 =cut
 
@@ -61,21 +59,16 @@ use POSIX;
 use Carp;
 use Getopt::Long;
 use Log::Log4perl;
-use Time::HiRes;
 use Data::Validate::Domain qw(is_domain);
 
 use Interface::Whois;
 use Util qw(debug trim tstamp println);
 
 
-# $|=1;
-
-
 GetOptions(
 	'in=s'       => \( my $in           = undef),    # path to an input file with domains list
-	'out=s'      => \( my $out          = undef),    # path to an output result file
-	'domain=s'   => \( my $domain       = undef),    # domain name (for check how it works)
-	'limit=i'    => \( my $limit        = undef),    # limit on the number of requests during testing
+	# 'out=s'      => \( my $out          = undef),    # path to an output result file
+	'extend'     => \( my $extend_info  = undef),    # print out extend info: expiration date and calculated amount of days
 	'debug'      => \( my $debug        = undef),    # log whois response
 	"help|h"     => \( my $help         = undef),    # help
 );
@@ -86,18 +79,17 @@ if ($help) {
 	pod2usage( -exitstatus => 0, -verbose => 99, -sections => [ qw|NAME DESCRIPTION SYNOPSIS| ] );
 }
 
-unless ( defined $in || defined $domain ) {
-	println('Error: one of the "in" or "domain" param is required');
+unless ( $in ) {
+	println('Error: param  "in" is required');
 	exit;
 }
 
 
 main(
-	in     => $in,
-	domain => $domain,
-	out    => $out,
-	limit  => $limit,
-	debug  => $debug,
+	in            => $in,
+	# out         => $out,
+	extend_info   => $extend_info,
+	debug         => $debug,
 );
 
 
@@ -131,26 +123,30 @@ sub main {
 	open(F, '<', $path) 
 		or croak('Can not open file : '.$path.'. '.$!);
 
-	my $c = 0;
+	my $line_num    = 0; # number of lines in a input file
+	my $domain_num  = 0; # number of domains
+	my $success_num = 0; # number of success getting whois info
 
-	println('domain;status');
+	println( $p{extend_info} ? 'domain;status;expiration date;days' : 'domain;status');
 
 	while (my $line = <F>) {
 
-		$c++;
+		$line_num++;
 
 		my $domain = Util::trim($line);
 		next unless $domain;
 		next if $domain =~ /^#/;
 
 		unless (is_domain($domain)) {
-			$logger->warn('Warning: the string "'.$domain.'" at the line '.$c.' doesn\'t look like a domain name. Go to the next line.');
+			$logger->warn('Warning: the string "'.$domain.'" at the line '.$line_num.' doesn\'t look like a domain name. Go to the next line.');
 			next;
 		}
 
 		$logger->info('Get whois info for the domain "'.$domain .'"');
 
 		my $res = $whois->get_info($domain);
+
+		$domain_num++;
 
 		unless ($res) {
 			println($domain.';ERROR: UNKNOWN_WHOIS');
@@ -179,22 +175,32 @@ sub main {
 			next;
 		}
 
-		# task 1: print domain and domain statuses
-		# println( join ';', $domain, join(',', $res->domain_status) );
-
-		# task 2: append expire domain date
 		my $expire_part =  $res->domain_expire_date
 			? Util::format_date( $res->domain_expire_date, 'YYYY-MM-DD hh:mm:ss', 'GMT' ) .';'.$res->domain_expire_days
 			: '-;-';
 
-		println( join ';', $domain, join(',', $res->domain_status), $expire_part );
+		println( $extend_info
+			? join ';', $domain, join(',', $res->domain_status), $expire_part   # task 2
+			: join ';', $domain, join(',', $res->domain_status)                 # task 1
+		);
+
+		$success_num++;
 
 		$logger->info('Success getting whois info');
+
 	}
 
 	close F;
 
+	$logger->info('Process completed. File lines: '.$line_num.'; domains: '.$domain_num.'; success whois requests: '.$success_num);
+
+	return 1;
 }
+
+
+
+
+
 
 1;
 
