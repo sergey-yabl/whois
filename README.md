@@ -123,6 +123,13 @@ key-systems.info;clientTransferProhibited
 ...
 ```
 
+NOTE: if there is a whois request error, the message would be placed at the "status" position:
+```
+domain;status
+rrpproxy.mobi;ERROR: TIMEOUT
+```
+
+
 ```sh
 ./list.pl --in domain_list --extend
    ```
@@ -134,6 +141,13 @@ key-systems.org;clientDeleteProhibited,clientTransferProhibited;2022-11-12 14:42
 key-systems.info;clientTransferProhibited;2022-07-31 17:05:12;126
 ...
 ```
+
+NOTE: if there is a problem with determine expiration date and days, those values would be replaced with hyphens:
+```
+domain;status;expiration date;days
+rrpproxy.biz;clientTransferProhibited;-;-
+```
+
 
 ### Synopsys
 ```sh
