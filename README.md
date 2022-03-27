@@ -47,6 +47,7 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
+    <li><a href="#synopsys">Synopsys</a></li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#log-files">Log files</a></li>
   </ol>
@@ -108,6 +109,17 @@ from today until the expiration date, example:
 	3. Check and update whois servers at the whois.conf if necessary
 	4. Make the log directory: ```mkdir log```
 
+## Synopsys
+```sh
+list.pl [--in <path>] [--extend] [--debug]
+
+  Options:
+    --help:        Print a summary of the command-line usage and exit.
+    --in:          Path to a file with domain names list (one domain per line).
+    --extend:      Print out extend info: expiration date and calculated amount of days.
+    --debug:       Each request/response body are going to logging.
+```
+
 <!-- USAGE EXAMPLES -->
 ## Usage
 
@@ -158,17 +170,6 @@ domain;status;expiration date;days
 rrpproxy.biz;clientTransferProhibited;-;-
 ```
 
-
-### Synopsys
-```sh
-list.pl [--in <path>] [--extend] [--debug]
-
-  Options:
-    --help:        Print a summary of the command-line usage and exit.
-    --in:          Path to a file with domain names list (one domain per line).
-    --extend:      Print out extend info: expiration date and calculated amount of days.
-    --debug:       Each request/response body are going to logging.
-```
 
 <!-- LOG FILES -->
 ### Log files
