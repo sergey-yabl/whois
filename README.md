@@ -60,7 +60,8 @@
 This is Centralnic test assignment
 
 ### TASK 1
-Create a program which reads the file 'domains.txt', queries the whois service for each domain and prints out a list. 
+Create a program which reads the file 'domains.txt', queries the whois service for each domain and prints out a list.
+There are only ORG, INFO, ASIA, BIZ, MOBI domain zones supported.
 
 ```
 #The list should contain the domain name and the domain status, example:
@@ -71,9 +72,8 @@ Create a program which reads the file 'domains.txt', queries the whois service f
 
 ### TASK 2
 Add the expiration date, for each domain, as well as the  (in the program) calculated amount of days,
-
+from today until the expiration date, example:
 ```
-#from today until the expiration date, example:
 #domain;status;expirationdate;days until expirationdate
 #key-systems.org;clientDeleteProhibited,clientTransferProhibited;2015-11-12 14:42:38;22
 #etc.
@@ -86,7 +86,7 @@ Add the expiration date, for each domain, as well as the  (in the program) calcu
  - Install packages
    ```sh
    sudo apt install libyaml-libyaml-perl
-   sudo apt-get install -y git cpanminus gcc   
+   sudo apt-get install -y git cpanminus gcc
    ```
    
  - Install CPAN packages
@@ -112,10 +112,20 @@ Add the expiration date, for each domain, as well as the  (in the program) calcu
 ## Usage
 
 ```sh
-./runner.pl --limit 1000 --threads 8
 ./list.pl --in domains_list
    ```
-It's going to read domains from input file, queries whois requests and print stdout domain name and it's flags like that:
+It's going to read domains from input file, queries whois requests and print result into stdout.
+An input file domain_list must contain a domains list, one domain name per line:
+
+```
+key-systems.org
+key-systems.info
+....
+rrpproxy.biz
+rrpproxy.mobi
+```
+
+A result with domain and it's statuses would be printed into stdout like that:
 ```
 domain;status
 key-systems.org;clientDeleteProhibited,clientTransferProhibited
