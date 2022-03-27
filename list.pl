@@ -154,7 +154,7 @@ sub main {
 			next;
 		}
 
-		$logger->info('Whois server: '.$res->srv);
+		$logger->info('Whois server: '.$res->srv.'; rid: '.$res->rid);
 
 		# process errors
 		unless ( $res->is_success) {

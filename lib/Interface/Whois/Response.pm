@@ -19,6 +19,7 @@ use Accessor(
 	is_success        => 'is_success',  # success response flag
 	domain            => 'domain',      # domain name
 	srv               => 'srv',         # whois host name
+	rid               => 'rid',         # request id for logging
 	logger            => 'logger',      # Log4Perl object
 	error_code        => 'error_code',  # response error code:
 	                                    #   TIMEOUT                   - response timeout
@@ -52,6 +53,7 @@ sub new
 		'tld'             => (split /\./, $p{domain})[-1],
 		'is_success'      => 0,
 		'errstr'          => '',
+		'rid'             => Util::rand_range(1000000000, 9999999999),
 		'debug'           => $p{debug},
 		'_parse'          => {},
 		'_cache'          => {},
@@ -218,6 +220,7 @@ sub print_debug {
 	my $self = shift;
 
 	Util::debug( "\n\n\n"
+		. 'rid: '.$self->rid
 		. $self->srv .': '.$self->domain 
 		. "\n-------START RESPONSE---------------\n"
 		. $self->raw
